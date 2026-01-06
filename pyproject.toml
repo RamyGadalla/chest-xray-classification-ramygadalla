@@ -1,0 +1,32 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "chestxray_module"
+version = "0.0.1"
+description = "Deep-learning based multi-class classification model for chest X-ray images"
+authors = [
+  { name = "Ramy Gadalla" },
+]
+
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    
+]
+requires-python = "==3.10.15"
+
+
+[tool.ruff]
+line-length = 99
+src = ["chestxray_module"]
+include = ["pyproject.toml", "chestxray_module/**/*.py"]
+
+[tool.ruff.lint]
+extend-select = ["I"]  # Add import sorting
+
+[tool.ruff.lint.isort]
+known-first-party = ["chestxray_module"]
+force-sort-within-sections = true
+
