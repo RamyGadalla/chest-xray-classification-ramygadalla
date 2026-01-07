@@ -6,6 +6,18 @@
 
 Deep-learning based multi-class classification model for chest X-ray images
 
+
+## Dateset
+
+Dataset URL: https://www.kaggle.com/datasets/muhammadrehan00/chest-xray-dataset
+
+
+If Kaggle API token is configured your system, the dataset can be downloaded using:
+```
+kaggle datasets download -d muhammadrehan00/chest-xray-dataset -p data/raw
+unzip -o data/raw/*.zip -d data/interim
+```
+
 ## Project Organization
 
 ```
