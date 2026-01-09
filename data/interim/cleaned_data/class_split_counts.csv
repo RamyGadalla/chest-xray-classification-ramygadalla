@@ -1,0 +1,10 @@
+split,class,num_images
+train,normal,2829
+train,pneumonia,3401
+train,tuberculosis,5304
+val,normal,335
+val,pneumonia,411
+val,tuberculosis,662
+test,normal,336
+test,pneumonia,433
+test,tuberculosis,662
