@@ -1,14 +1,14 @@
 # Data
 data/raw/*.zip
-data/raw/unzipped_raw_data/test/normal/
-data/raw/unzipped_raw_data/test/pneumonia/
-data/raw/unzipped_raw_data/test/tuberculosis/
-data/raw/unzipped_raw_data/train/normal/
-data/raw/unzipped_raw_data/train/pneumonia/
-data/raw/unzipped_raw_data/train/tuberculosis/
-data/raw/unzipped_raw_data/val/normal/
-data/raw/unzipped_raw_data/val/pneumonia/
-data/raw/unzipped_raw_data/val/tuberculosis/
+data/raw/unzipped_raw_data/test/normal/*jpg
+data/raw/unzipped_raw_data/test/pneumonia/*jpg
+data/raw/unzipped_raw_data/test/tuberculosis/*jpg
+data/raw/unzipped_raw_data/train/normal/*jpg
+data/raw/unzipped_raw_data/train/pneumonia/*jpg
+data/raw/unzipped_raw_data/train/tuberculosis/*jpg
+data/raw/unzipped_raw_data/val/normal/*jpg
+data/raw/unzipped_raw_data/val/pneumonia/*jpg
+data/raw/unzipped_raw_data/val/tuberculosis/*jpg
 
 /Machine Learning Specialist - Technical Test.pdf
 # Mac OS-specific storage files
