@@ -15,7 +15,7 @@ Dataset URL: https://www.kaggle.com/datasets/muhammadrehan00/chest-xray-dataset
 If Kaggle API token is configured on your system, the dataset can be downloaded using:
 ```
 kaggle datasets download -d muhammadrehan00/chest-xray-dataset -p data/raw
-unzip -o data/raw/*.zip -d data/interim
+unzip -o data/raw/*.zip -d data/raw/unzipped_raw_data
 ```
 
 ## Project Organization
