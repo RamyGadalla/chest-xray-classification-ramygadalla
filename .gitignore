@@ -9,6 +9,15 @@ data/raw/unzipped_raw_data/train/tuberculosis/*jpg
 data/raw/unzipped_raw_data/val/normal/*jpg
 data/raw/unzipped_raw_data/val/pneumonia/*jpg
 data/raw/unzipped_raw_data/val/tuberculosis/*jpg
+data/interim/cleaned_data/test/normal/*jpg
+data/interim/cleaned_data/test/pneumonia/*jpg
+data/interim/cleaned_data/test/tuberculosis/*jpg
+data/interim/cleaned_data/train/normal/*jpg
+data/interim/cleaned_data/train/pneumonia/*jpg
+data/interim/cleaned_data/train/tuberculosis/*jpg
+data/interim/cleaned_data/val/normal/*jpg
+data/interim/cleaned_data/val/pneumonia/*jpg
+data/interim/cleaned_data/val/tuberculosis/*jpg
 
 /Machine Learning Specialist - Technical Test.pdf
 # Mac OS-specific storage files
