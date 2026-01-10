@@ -1,6 +1,6 @@
 from pathlib import Path
 from torch.utils.data import Dataset
-from monai.transforms import Compose, Transform, LoadImage, EnsureChannelFirst, Lambda, RepeatChannel, Resize, SpatialPad, ScaleIntensity, NormalizeIntensity
+from monai.transforms import Compose, Transform, LoadImage, EnsureChannelFirst, Lambda, RepeatChannel, Resize, SpatialPad, ScaleIntensity, NormalizeIntensity, RandRotate, RandAffine, RandFlip, RandGaussianNoise
 from monai.data import Dataset
 import pandas as pd
 import shutil
@@ -99,7 +99,7 @@ class GCLAHE(Transform):
     """
     Create a Global-CLAHE transformation for image enhancement more suited for medical images.
     improves local contrast while preserving anatomical detail in medical images
-
+    
     """
     
     def __init__(self, tile_grid_size=(8, 8), max_clip_limit=3.0):
@@ -131,8 +131,7 @@ class GCLAHE(Transform):
             
         # back to (3, H, W)
         return torch.from_numpy(np.stack(processed_channels))
-
-def transform(dataset):
+def transform(dataset, type):
     """
     Return a new transformed Dataset
      a- convert to grayscale by averaging channels since some images have incononsistent channels
@@ -157,7 +156,7 @@ def transform(dataset):
     
     to_gray = Lambda(lambda x: x.mean(dim=0, keepdim=True))
 
-    transforms = Compose([
+    base_transforms = [
         LoadImage(image_only=True),
         EnsureChannelFirst(),
         to_gray,
@@ -172,13 +171,44 @@ def transform(dataset):
         channel_wise=True,
         ),
         
-    ])
-
-    dataset_transformed = Dataset(
+    ]
+    
+    train_augments = [
+        
+        RandRotate(
+            range_x=10 * 3.1416 / 180,   # ±10 degrees
+            prob=0.5,
+        ),
+        RandAffine(
+            translate_range=(10, 10),
+            scale_range=(0.1, 0.1),
+            prob=0.5,
+        ),
+        RandFlip(
+            spatial_axis=1,
+            prob=0.5,
+        ),
+        RandGaussianNoise(
+            mean=0.0,
+            std=0.01,
+            prob=0.3,
+        ),
+    ]
+    
+    train_transforms = base_transforms + train_augments
+    
+    if type == "train":
+        dataset_transformed = Dataset(
+            data=image_paths,
+            transform=train_transforms)
+        print(f"Transformation + augmentation done successfully on training data.")
+    else: 
+        dataset_transformed = Dataset(
         data=image_paths,
-        transform=transforms
-    )
-    print(f"Transformation done successfully.")
+        transform=base_transforms
+        )
+        print(f"Transformation done successfully.")
+    
     return dataset_transformed
 
 class add_split_class(Dataset):
