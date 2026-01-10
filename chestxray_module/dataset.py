@@ -255,7 +255,7 @@ def load_split(split):
     """
     clean_data()
     raw_data = data_load(data_dir='data/interim/cleaned_data', inspect=False)
-    transformed_data = transform(raw_data)
+    transformed_data = transform(raw_data, split)
     labeled_data = add_split_class(transformed_data)
     split_data = get_split(labeled_data, split)
     
