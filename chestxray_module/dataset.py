@@ -1,29 +1,236 @@
 from pathlib import Path
-
-from loguru import logger
-from tqdm import tqdm
-import typer
-
-from chestxray_module.config import PROCESSED_DATA_DIR, RAW_DATA_DIR
-
-app = typer.Typer()
-
-
-@app.command()
-def main(
-    # ---- REPLACE DEFAULT PATHS AS APPROPRIATE ----
-    input_path: Path = RAW_DATA_DIR / "dataset.csv",
-    output_path: Path = PROCESSED_DATA_DIR / "dataset.csv",
-    # ----------------------------------------------
-):
-    # ---- REPLACE THIS WITH YOUR OWN CODE ----
-    logger.info("Processing dataset...")
-    for i in tqdm(range(10), total=10):
-        if i == 5:
-            logger.info("Something happened for iteration 5.")
-    logger.success("Processing dataset complete.")
-    # -----------------------------------------
+from torch.utils.data import Dataset
+from monai.transforms import Compose, Transform, LoadImage, EnsureChannelFirst, Lambda, RepeatChannel, Resize, SpatialPad, ScaleIntensity, NormalizeIntensity
+from monai.data import Dataset
+import pandas as pd
+import shutil
+import random
+import sys
+import torch
+import cv2
+from torch.utils.data import Subset
 
 
-if __name__ == "__main__":
-    app()
+
+def clean_data():
+    csv_path = Path("data/raw/paths_to_delete.csv")
+    source_dir = Path("data/raw/unzipped_raw_data")
+    cleaned_dir = Path("data/interim/cleaned_data")
+
+    # --- Abort if already cleaned ---
+    if cleaned_dir.exists():
+        print(f"[INFO] {cleaned_dir} already exists.")
+        return
+
+    # --- Copy raw data ---
+    print("Copying raw/unzipped_raw_data → data/interim/cleaned_data ...")
+    shutil.copytree(source_dir, cleaned_dir)
+
+    # --- Load paths to delete ---
+    df = pd.read_csv(csv_path)
+
+    deleted = 0
+    
+    # --- Delete files from copied data only ---
+    deleted = 0
+    for p in df["path"]:
+      fp = Path(p.replace("../data/raw/unzipped_raw_data", "data/interim/cleaned_data"))
+      if fp.exists():
+          fp.unlink()
+          deleted += 1
+
+    print(f"Deleted {deleted} files from interim/cleaned_data.")
+    
+    return clean_data
+
+def data_load(data_dir, inspect=True, n_samples=3):
+    """
+    Create a MONAI Dataset, ensure channels come first, and optionally inspect sample properties.
+
+    Parameters
+    ----------
+    data_dir : str or Path
+        Root directory containing image files.
+    inspect : bool
+        Whether to print sample dataset information.
+    n_samples : int
+        Number of samples to inspect. samples are chosen randomly.
+
+    Returns
+    -------
+    dataset : monai.data.Dataset
+        Lazy-loading MONAI dataset.    
+    """
+    data_dir = Path(data_dir)
+    image_paths = list(data_dir.rglob("*.jpg"))
+
+    transforms = Compose([
+        LoadImage(image_only=True),
+        EnsureChannelFirst(),
+    ])
+
+    dataset = Dataset(
+        data=image_paths,
+        transform=transforms
+    )
+
+    # 🔍 Lightweight inspection
+    if inspect and len(dataset) > 0:
+        print(f"Dataset size: {len(dataset)} images")
+
+        sample_indices = random.sample(
+            range(len(dataset)),
+            min(n_samples, len(dataset))
+        )
+
+        for idx in sample_indices:
+            img = dataset[idx]
+            print(
+                f"Sample {idx}: "
+                f"shape={tuple(img.shape)}, "
+                f"dtype={img.dtype}, "
+                f"min={float(img.min()):.2f}, "
+                f"max={float(img.max()):.2f}"
+            )
+
+    return dataset
+
+class GCLAHE(Transform):
+    """
+    Create a Global-CLAHE transformation for image enhancement more suited for medical images.
+    improves local contrast while preserving anatomical detail in medical images
+
+    """
+    
+    def __init__(self, tile_grid_size=(8, 8), max_clip_limit=3.0):
+        self.tile_grid_size = tile_grid_size
+        self.max_clip_limit = max_clip_limit
+
+    def __call__(self, img_tensor):
+        #  (C, H, W) tensor to (H, W, C) numpy for ease of channel processing now. Will reverse it back later
+        img_np = img_tensor.detach().cpu().numpy()
+        
+        processed_channels = []
+        # Process each of the 3 channels individually
+        for c in range(img_np.shape[0]):
+            # 1. Scale to uint8 for OpenCV
+            channel = (img_np[c] * 255).astype(np.uint8)
+            
+            # 2. Global Reference (GEI)
+            gei = cv2.equalizeHist(channel)
+            
+            # 3. Local Enhancement (CLAHE)
+            clahe = cv2.createCLAHE(clipLimit=self.max_clip_limit, tileGridSize=self.tile_grid_size)
+            lei = clahe.apply(channel)
+            
+            # 4. G-CLAHE Blending: Maintain global brightness consistency
+            # 50/50 blend is common to prevent local artifacts
+            g_clahe_channel = cv2.addWeighted(lei, 0.5, gei, 0.5, 0)
+            
+            processed_channels.append(g_clahe_channel.astype(np.float32) / 255.0)
+            
+        # back to (3, H, W)
+        return torch.from_numpy(np.stack(processed_channels))
+
+def transform(dataset):
+    """
+    Return a new transformed Dataset
+     a- convert to grayscale by averaging channels since some images have incononsistent channels
+     b- repeat channels to have 3 channels again.
+     c- resize to 224x224
+     d- pad to ensure 224x224
+     e- scale intensity to [0,1]
+     f- apply G-CLAHE Transform class
+     g- normalize intensity with ImageNet stats
+
+    Parameters
+    ----------
+    dataset : monai.data.Dataset
+        Existing dataset (paths will be reused).
+
+    Returns
+    -------
+    dataset_transformed : monai.data.Dataset
+        New dataset after applying the transformations.
+    """
+    image_paths = dataset.data  
+    
+    to_gray = Lambda(lambda x: x.mean(dim=0, keepdim=True))
+
+    transforms = Compose([
+        LoadImage(image_only=True),
+        EnsureChannelFirst(),
+        to_gray,
+        RepeatChannel(3),
+        Resize((224, 224), mode='bilinear'),
+        SpatialPad(spatial_size=(224, 224), method="symmetric"),
+        ScaleIntensity(),               # [0,255] → [0,1]
+        GCLAHE(tile_grid_size=(8, 8), max_clip_limit=3.0),
+        NormalizeIntensity(
+        subtrahend =[0.485, 0.456, 0.406],
+        divisor=[0.229, 0.224, 0.225],
+        channel_wise=True,
+        ),
+        
+    ])
+
+    dataset_transformed = Dataset(
+        data=image_paths,
+        transform=transforms
+    )
+    print(f"Transformation done successfully.")
+    return dataset_transformed
+
+class add_split_class(Dataset):
+    
+    """
+    A custom Dataset wrapper that adds 'class' and 'split' metadata based on file paths without modifying image tensors or transforms.
+
+    """
+    
+    def __init__(self, base_dataset):
+        self.base_dataset = base_dataset
+        self.paths = base_dataset.data  # original image paths
+
+    def __len__(self):
+        return len(self.base_dataset)
+
+    def __getitem__(self, idx):
+        image = self.base_dataset[idx]  # tensor, unchanged
+        path = Path(self.paths[idx])
+        
+        
+
+        return {
+            "image": image,
+            "path": str(path),
+            "class": path.parent.name,        # normal / pneumonia / tuberculosis
+            "split": path.parent.parent.name,      # train / val / test
+        }
+    
+
+def get_split(dataset, split_name):
+    """
+    Return a subset of the dataset corresponding to the given split.
+    """
+    indices = [
+        i for i, p in enumerate(dataset.paths)
+        if Path(p).parent.parent.name == split_name
+    ]
+    return Subset(dataset, indices)
+
+def load_split(split):
+    """
+    Load a specific split ('train', 'val', or 'test') from the labeled dataset.
+    """
+    clean_data()
+    raw_data = data_load(data_dir='data/interim/cleaned_data', inspect=False)
+    transformed_data = transform(raw_data)
+    labeled_data = add_split_class(transformed_data)
+    split_data = get_split(labeled_data, split)
+    
+    
+    print(f"{len(split_data)} images in {split}_data.")
+    return split_data
+
+
