@@ -19,6 +19,9 @@ data/interim/cleaned_data/val/normal/*jpg
 data/interim/cleaned_data/val/pneumonia/*jpg
 data/interim/cleaned_data/val/tuberculosis/*jpg
 mlruns/*
+chestxray.code-workspace
+mlflow.db
+
 
 /Machine Learning Specialist - Technical Test.pdf
 
