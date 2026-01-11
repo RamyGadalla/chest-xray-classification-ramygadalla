@@ -15,12 +15,13 @@ from chestxray_module.dataset import load_split
 import os
 import random
 from pathlib import Path
-
+from sklearn.metrics import recall_score
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import models
+from sklearn.calibration import calibration_curve, CalibrationDisplay
 
 from sklearn.metrics import (
     roc_auc_score,
@@ -213,5 +214,117 @@ report_df = pd.DataFrame(report_dict).transpose()
 report_df.to_csv(OUT_DIR / "classification_report.csv")
 print(f"\n classification report.csv saved to: {OUT_DIR.resolve()}")
 
-
 # =============================
+# Calibration curve
+# =============================
+
+all_probs = []
+all_targets = []
+
+with torch.no_grad():
+    for batch in test_loader:
+        images = batch["image"].to(DEVICE)
+
+        # Ensure correct dtype for the model (float)
+        if images.dtype != torch.float32:
+            images = images.float()
+
+        # labels must be numeric long tensor 
+        labels = batch["class"].to(DEVICE).long()
+
+        logits = model(images)                     
+        probs = torch.softmax(logits, dim=1)       
+
+        all_probs.append(probs.cpu().numpy())
+        all_targets.append(labels.cpu().numpy())
+
+all_probs = np.concatenate(all_probs, axis=0)       
+all_targets = np.concatenate(all_targets, axis=0)   
+
+
+
+fig, ax = plt.subplots(figsize=(6, 6))
+
+# Perfect calibration line
+ax.plot([0, 1], [0, 1], "--", color="gray", label="Perfect calibration")
+
+for class_idx, class_name in enumerate(CLASS_NAMES):
+    # One-vs-rest labels
+    y_true_bin = (all_targets == class_idx).astype(int)
+    y_prob_bin = all_probs[:, class_idx]
+
+    CalibrationDisplay.from_predictions(
+        y_true_bin,
+        y_prob_bin,
+        n_bins=5,
+        strategy="uniform",
+        name=f"{class_name} (OvR)",
+        ax=ax,
+    )
+
+ax.set_title("Reliability Diagram (Test data) - One-vs-Rest")
+ax.set_xlabel("Mean predicted probability")
+ax.set_ylabel("Fraction of positives")
+ax.legend()
+ax.grid(True)
+plt.tight_layout()
+plt.savefig(fig_dir / "calibration_curve.png")
+
+
+#### Threshold analysis #####
+PN_IDX = 1
+y_true = (all_targets == PN_IDX).astype(int)
+y_prob = all_probs[:, PN_IDX]
+
+thresholds = np.linspace(0.0, 1.0, 101)
+
+sensitivities = []
+specificities = []
+
+for t in thresholds:
+    y_pred = (y_prob >= t).astype(int)
+
+    sensitivity = recall_score(y_true, y_pred)  # TP / (TP + FN)
+    specificity = recall_score(y_true, y_pred, pos_label=0)  # TN / (TN + FP)
+
+    sensitivities.append(sensitivity)
+    specificities.append(specificity)
+    
+fig, axes = plt.subplots(1, 2, figsize=(12, 4), sharey=True)   
+
+axes[0].plot(thresholds, sensitivities, label="Sensitivity (Recall)")
+axes[0].plot(thresholds, specificities, label="Specificity")
+axes[0].set_xlabel("Probability Threshold")
+axes[0].set_ylabel("Score")
+axes[0].set_title("Threshold Analysis – Pneumonia")
+axes[0].legend()
+
+
+
+TB_IDX = 2
+y_true = (all_targets == TB_IDX).astype(int)
+y_prob = all_probs[:, TB_IDX]
+
+thresholds = np.linspace(0.0, 1.0, 101)
+
+sensitivities = []
+specificities = []
+
+for t in thresholds:
+    y_pred = (y_prob >= t).astype(int)
+
+    sensitivity = recall_score(y_true, y_pred)  # TP / (TP + FN)
+    specificity = recall_score(y_true, y_pred, pos_label=0)  # TN / (TN + FP)
+
+    sensitivities.append(sensitivity)
+    specificities.append(specificity)
+
+
+axes[1].plot(thresholds, sensitivities, label="Sensitivity (Recall)")
+axes[1].plot(thresholds, specificities, label="Specificity")
+axes[1].set_xlabel("Probability Threshold")
+axes[1].set_ylabel("Score")
+axes[1].set_title("Threshold Analysis – Tuberculosis (Test)")
+axes[1].legend()
+
+plt.savefig(fig_dir / "threshold_Recall_specificity_curve.png")
