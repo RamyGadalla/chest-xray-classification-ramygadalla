@@ -9,6 +9,7 @@ import sys
 import torch
 import cv2
 from torch.utils.data import Subset
+import numpy as np
 
 
 
@@ -211,6 +212,12 @@ def transform(dataset, type):
     
     return dataset_transformed
 
+CLASS_TO_IDX = {
+    "normal": 0,
+    "pneumonia": 1,
+    "tuberculosis": 2,
+}
+
 class add_split_class(Dataset):
     
     """
@@ -234,7 +241,7 @@ class add_split_class(Dataset):
         return {
             "image": image,
             "path": str(path),
-            "class": path.parent.name,        # normal / pneumonia / tuberculosis
+            "class": torch.tensor(CLASS_TO_IDX[path.parent.name], dtype=torch.long),    # normal / pneumonia / tuberculosis
             "split": path.parent.parent.name,      # train / val / test
         }
     
@@ -253,12 +260,12 @@ def load_split(split):
     """
     Load a specific split ('train', 'val', or 'test') from the labeled dataset.
     """
+    ## This order could be more efficient I will look into it later ##
     clean_data()
     raw_data = data_load(data_dir='data/interim/cleaned_data', inspect=False)
     transformed_data = transform(raw_data, split)
     labeled_data = add_split_class(transformed_data)
     split_data = get_split(labeled_data, split)
-    
     
     print(f"{len(split_data)} images in {split}_data.")
     return split_data
