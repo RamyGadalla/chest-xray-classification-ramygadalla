@@ -13,6 +13,7 @@ Key features:
 """
 from chestxray_module.dataset import load_split
 import os
+from pathlib import Path
 import copy
 import torch
 import torch.nn as nn
@@ -49,12 +50,12 @@ MIN_DELTA = 1e-3
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 CHECKPOINT_PATH = f"{os.getcwd()}/models/best_model.pt"
-REPORT_PATH = f"{os.getcwd()}/reports/"
+OUT_DIR = Path(f"{os.getcwd()}/reports/best_model/train_reports/")
+OUT_DIR.mkdir(parents=True, exist_ok=True)
 CLASS_NAMES = ["normal", "pneumonia", "tuberculosis"]
 
 print(f"CHECKPOINT_PATH is {CHECKPOINT_PATH}")
-print(f"REPORT_PATH is {REPORT_PATH}")
-
+print(f"OUT_DIR is {OUT_DIR}")
 
 # -----------------------------
 # REPRODUCIBILITY
@@ -375,8 +376,8 @@ cm_df = pd.DataFrame(
     columns=[f"pred_{c}" for c in CLASS_NAMES],
 )
 
-cm_df.to_csv(REPORT_PATH + "confusion_matrix.csv")
-print(f"Confusion Matrix saved in {os.getcwd()}/reports. \n", cm_df)
+cm_df.to_csv(OUT_DIR / "confusion_matrix.csv")
+print(f"Confusion Matrix saved to {OUT_DIR}confusion_matrix.csv. \n", cm_df)
 
 sns.heatmap(
     cm,
@@ -391,8 +392,10 @@ plt.xlabel("Predicted label")
 plt.ylabel("True label")
 plt.title("Validation Confusion Matrix")
 #plt.show()
-plt.savefig("reports/figures/confusion_matrix_heatmap.png", dpi=300)
-print(f"Confusion matrix heatmap saved in {os.getcwd()}/reports/figures")
+fig_dir = OUT_DIR / "figures"
+fig_dir.mkdir(parents=True, exist_ok=True)
+plt.savefig(fig_dir / "confusion_matrix.png", dpi=300)
+print(f"\nconfusion matrix heatmaps saved to: {fig_dir.resolve()}")
 
 report_dict = classification_report(
     all_targets,
@@ -403,8 +406,8 @@ report_dict = classification_report(
 )
 
 report_df = pd.DataFrame(report_dict).transpose()
-report_df.to_csv(REPORT_PATH + "metrics_report.csv")
-print(f"Classification Report saved in {os.getcwd()}/reports. \n", report_df)
+report_df.to_csv(OUT_DIR / "classification_report.csv")
+print(f"Classification Report saved to {OUT_DIR}classification_report.csv. \n", report_df)
 
 
 

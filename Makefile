@@ -10,9 +10,12 @@ PYTHON_INTERPRETER = python
 # COMMANDS                                                                      #
 #################################################################################
 
-.PHONY: train
+.PHONY: train eval
 train:
 	python chestxray_module/modeling/train.py
+	
+eval:
+	python chestxray_module/modeling/evaluate.py
 
 ## Install Python dependencies
 .PHONY: requirements
