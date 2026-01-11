@@ -10,6 +10,9 @@ PYTHON_INTERPRETER = python
 # COMMANDS                                                                      #
 #################################################################################
 
+.PHONY: train
+train:
+	python chestxray_module/modeling/train.py
 
 ## Install Python dependencies
 .PHONY: requirements
@@ -17,8 +20,6 @@ requirements:
 	$(PYTHON_INTERPRETER) -m pip install -U pip
 	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
 	
-
-
 
 ## Delete all compiled Python files
 .PHONY: clean
