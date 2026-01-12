@@ -30,12 +30,14 @@ from sklearn.metrics import (
     confusion_matrix,
     classification_report,
 )
-
+from PIL import Image
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-
+from pytorch_grad_cam import GradCAMPlusPlus
+from pytorch_grad_cam.utils.image import show_cam_on_image
+from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
 # =============================
 # Configuration 
@@ -271,7 +273,10 @@ plt.tight_layout()
 plt.savefig(fig_dir / "calibration_curve.png")
 
 
-#### Threshold analysis #####
+
+# =============================
+# Threshold analysis - Sensitivity and Specificity
+# =============================
 PN_IDX = 1
 y_true = (all_targets == PN_IDX).astype(int)
 y_prob = all_probs[:, PN_IDX]
@@ -328,3 +333,119 @@ axes[1].set_title("Threshold Analysis – Tuberculosis (Test)")
 axes[1].legend()
 
 plt.savefig(fig_dir / "threshold_Recall_specificity_curve.png")
+
+
+# =============================
+# Grad-CAM Visualizations
+# =============================
+
+# Last conv layer for DenseNet
+target_layers = [model.features.denseblock4]
+
+cam = GradCAMPlusPlus(
+    model=model,
+    target_layers=target_layers
+)
+
+
+# ----------------------------
+# Collect predictions
+# ----------------------------
+records = []
+
+with torch.no_grad():
+    for batch in test_loader:
+        images = batch["image"].to(DEVICE)
+        labels = batch["class"].to(DEVICE)
+        paths  = batch["path"]
+
+        logits = model(images)
+        probs = torch.softmax(logits, dim=1)
+        preds = torch.argmax(probs, dim=1)
+
+        for i in range(images.size(0)):
+            records.append({
+                "image": images[i],
+                "true": labels[i].item(),
+                "pred": preds[i].item(),
+                "prob": probs[i].cpu().numpy(),
+                "path": paths[i],
+            })
+
+
+# ----------------------------
+# Helper to pick examples
+# ----------------------------
+def pick_case(true_cls, pred_cls):
+    for r in records:
+        if r["true"] == true_cls and r["pred"] == pred_cls:
+            return r
+    return None
+
+CASES = {
+    "TB_TP": pick_case(2, 2),
+    "TB_FP": pick_case(0, 2),
+    "TB_FN": pick_case(2, 0),
+    "PNA_TP": pick_case(1, 1),
+    "PNA_FP": pick_case(0, 1),
+    "PNA_FN": pick_case(1, 0),
+}
+
+# ----------------------------
+# Run Grad-CAM++
+# ----------------------------
+for name, case in CASES.items():
+    if case is None:
+        print(f"[WARN] {name} not found")
+        continue
+
+    image = case["image"].unsqueeze(0)
+    target_class = case["pred"]
+
+    targets = [ClassifierOutputTarget(target_class)]
+    grayscale_cam = cam(image, targets=targets)[0]
+
+    # Convert tensor → numpy image
+    img = image.squeeze().permute(1, 2, 0).cpu().numpy()
+    img = (img - img.min()) / (img.max() - img.min() + 1e-6)
+
+    cam_image = show_cam_on_image(img, grayscale_cam, use_rgb=True)
+    cam_image = np.rot90(cam_image, k=-1)
+    cam_image = np.fliplr(cam_image)
+    
+    original_img = Image.open(case["path"]).convert("RGB")
+        
+    fig, axes = plt.subplots(1, 2, figsize=(8, 4))
+
+    axes[0].imshow(original_img)
+    axes[0].set_title("Original X-ray")
+    axes[0].axis("off")
+
+    axes[1].imshow(cam_image)
+    axes[1].set_title("Grad-CAM")
+    axes[1].axis("off")
+    
+    TITLE_MAP = {
+    "TB_TP":  "Tuberculosis – True Positive",
+    "TB_FP":  "Tuberculosis – False Positive",
+    "TB_FN":  "Tuberculosis – False Negative",
+    "PNA_TP": "Pneumonia – True Positive",
+    "PNA_FP": "Pneumonia – False Positive",
+    "PNA_FN": "Pneumonia – False Negative",
+}
+
+    fig.suptitle(TITLE_MAP.get(name, name))
+    plt.tight_layout()
+
+    # ----------------------------
+    # SAVE figure
+    # ----------------------------
+    #out_path = os.path.join(OUT_DIR, f"{name}_gradcam.png")
+ 
+    gradcam_dir = OUT_DIR / "GradcamMaps"
+    gradcam_dir.mkdir(parents=True, exist_ok=True)
+    plt.savefig(gradcam_dir / f"{name}_gradcam.png", dpi=200, bbox_inches="tight")
+    plt.close()
+
+print(f"Gradcam SAVED to {gradcam_dir}")
+    
