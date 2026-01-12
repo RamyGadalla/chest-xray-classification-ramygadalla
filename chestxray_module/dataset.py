@@ -132,6 +132,7 @@ class GCLAHE(Transform):
             
         # back to (3, H, W)
         return torch.from_numpy(np.stack(processed_channels))
+    
 def transform(dataset, type):
     """
     Return a new transformed Dataset
