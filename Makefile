@@ -17,6 +17,14 @@ ifdef BATCH_SIZE
 BATCH_SIZE_ARG := --batch_size $(BATCH_SIZE)
 endif
 
+ifdef OUTPUT_PATH
+OUTPUT_PATH_ARG := --output_path $(OUTPUT_PATH)
+endif
+
+ifdef BACKEND
+BACKEND_ARG := --backend $(BACKEND)
+endif
+
 #################################################################################
 # COMMANDS                                                                      #
 #################################################################################
@@ -29,11 +37,12 @@ eval:
 	python chestxray_module/modeling/evaluate.py
 
 predict:
-	python chestxray_module/modeling/predict.py \
+	python chestxray_module/modeling/predict_modifiy.py \
 		--input_path $(INPUT) \
-		--output_path $(OUTPUT) \
+		$(OUTPUT_PATH_ARG) \
 		$(CHECKPOINT_ARG) \
-		$(BATCH_SIZE_ARG)
+		$(BATCH_SIZE_ARG) \
+		$(BACKEND_ARG)
 
 
 ## Install Python dependencies

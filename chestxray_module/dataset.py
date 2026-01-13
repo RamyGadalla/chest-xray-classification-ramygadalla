@@ -64,9 +64,11 @@ def data_load(data_dir, recursive=False, inspect=True, n_samples=3):
     """
     data_dir = Path(data_dir)
     if recursive:
-        image_paths = list(data_dir.rglob("*.jpg"))
-    else: 
-        image_paths = list(data_dir.glob("*.jpg"))
+        image_paths = [p for ext in ("*.jpg", "*.jpeg", "*.png") for p in data_dir.rglob(ext)]
+        # image_paths = list(data_dir.rglob("*.jpg"))
+    else:
+        image_paths = [p for ext in ("*.jpg", "*.jpeg", "*.png") for p in data_dir.glob(ext)] 
+        # image_paths = list(data_dir.glob("*.jpg"))
 
     transforms = Compose([
         LoadImage(image_only=True),
