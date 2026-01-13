@@ -44,7 +44,7 @@ def clean_data():
     
     return clean_data
 
-def data_load(data_dir, inspect=True, n_samples=3):
+def data_load(data_dir, recursive=False, inspect=True, n_samples=3):
     """
     Create a MONAI Dataset, ensure channels come first, and optionally inspect sample properties.
 
@@ -63,7 +63,10 @@ def data_load(data_dir, inspect=True, n_samples=3):
         Lazy-loading MONAI dataset.    
     """
     data_dir = Path(data_dir)
-    image_paths = list(data_dir.rglob("*.jpg"))
+    if recursive:
+        image_paths = list(data_dir.rglob("*.jpg"))
+    else: 
+        image_paths = list(data_dir.glob("*.jpg"))
 
     transforms = Compose([
         LoadImage(image_only=True),
@@ -257,13 +260,14 @@ def get_split(dataset, split_name):
     ]
     return Subset(dataset, indices)
 
+#Specific for this project/repo
 def load_split(split):
     """
     Load a specific split ('train', 'val', or 'test') from the labeled dataset.
     """
     ## This order could be more efficient I will look into it later ##
     clean_data()
-    raw_data = data_load(data_dir='data/interim/cleaned_data', inspect=False)
+    raw_data = data_load(data_dir='data/interim/cleaned_data', recursive=True, inspect=False)
     transformed_data = transform(raw_data, split)
     labeled_data = add_split_class(transformed_data)
     split_data = get_split(labeled_data, split)

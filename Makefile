@@ -6,6 +6,17 @@ PROJECT_NAME = chestxray
 PYTHON_VERSION = 3.10.15
 PYTHON_INTERPRETER = python
 
+CHECKPOINT_ARG :=
+BATCH_SIZE_ARG :=
+
+ifdef CHECKPOINT
+CHECKPOINT_ARG := --checkpoint $(CHECKPOINT)
+endif
+
+ifdef BATCH_SIZE
+BATCH_SIZE_ARG := --batch_size $(BATCH_SIZE)
+endif
+
 #################################################################################
 # COMMANDS                                                                      #
 #################################################################################
@@ -16,6 +27,14 @@ train:
 	
 eval:
 	python chestxray_module/modeling/evaluate.py
+
+predict:
+	python chestxray_module/modeling/predict.py \
+		--input_path $(INPUT) \
+		--output_path $(OUTPUT) \
+		$(CHECKPOINT_ARG) \
+		$(BATCH_SIZE_ARG)
+
 
 ## Install Python dependencies
 .PHONY: requirements
