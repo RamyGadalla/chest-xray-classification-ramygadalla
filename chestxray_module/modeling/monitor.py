@@ -48,5 +48,31 @@ def extract_features_torch(model, dataloader):
 
 
 
+def prediction_entropy(probs):
+    eps = 1e-8
+    return -np.sum(probs * np.log(probs + eps))
+
+def needs_human_review(prob, cos_dist,
+                       conf_thresh=0.6,
+                       entropy_thresh=1.0,
+                       cos_thresh=0.2):
+    confidence = np.max(prob)
+    entropy = prediction_entropy(prob)
+
+    reasons = []
+
+    if confidence < conf_thresh:
+        reasons.append("low_confidence")
+
+    if entropy > entropy_thresh:
+        reasons.append("high_entropy")
+
+    if cos_dist > cos_thresh:
+        reasons.append("feature_drift")
+
+    return len(reasons) > 0, reasons
+
+
+
 
 
