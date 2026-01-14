@@ -63,7 +63,7 @@ def parse_args():
         "--output_path",
         type=str,
         default=os.getcwd(),
-        help="Directory to save predictions (default: inference_output)"
+        help="Directory to save predictions"
     )
     
     parser.add_argument(
