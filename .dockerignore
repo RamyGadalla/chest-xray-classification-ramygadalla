@@ -1,0 +1,43 @@
+
+# Large or unnecessary data
+data/raw/
+data/interim/
+data/*
+*.zip
+docs
+mlruns/
+notebooks/
+reports/
+chestxray.code-workspace
+
+mlflow.db
+README.md
+data/*
+
+# Git
+.git
+.gitignore
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+
+# Docker files themselves (optional)
+docker-compose.yml
