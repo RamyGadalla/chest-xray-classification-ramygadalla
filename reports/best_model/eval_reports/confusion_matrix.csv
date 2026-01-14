@@ -1,4 +1,4 @@
 ,pred_normal,pred_pneumonia,pred_tuberculosis
 true_normal,332,3,1
-true_pneumonia,1,432,0
-true_tuberculosis,28,1,633
+true_pneumonia,0,433,0
+true_tuberculosis,31,2,629
