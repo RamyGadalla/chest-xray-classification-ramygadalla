@@ -12,7 +12,11 @@ import os
 import pandas as pd
 import onnxruntime as ort
 import numpy as np
-
+from sklearn.metrics.pairwise import cosine_distances
+from scipy.stats import ks_2samp
+from chestxray_module.modeling.monitor import collect_pixel_stats, extract_features_torch
+from scipy.stats import gaussian_kde
+import matplotlib.pyplot as plt
 
 # =========================
 # Default arguments
@@ -21,6 +25,12 @@ import numpy as np
 DEFAULT_BATCH_SIZE = 32
 NUM_CLASSES = 3
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+# Import references for data monitoring
+ref = np.load("references/pixel_stats.npz")
+train_means = ref["image_means"]
+train_stds  = ref["image_stds"]
+train_centroid = np.load("references/feature_centroid.npy")
 
 # =========================
 # Argument parsing
@@ -96,7 +106,7 @@ def resolve_backend_checkpoint(args):
             default_checkpoint  = "models/best_model.pt"
 
     if backend == "onnx":
-        batch_size = 1
+        batch_size = 1  # to match the dimensions onnx model exported in. 
     else:
         batch_size = args.batch_size
     # Resolve checkpoint
@@ -298,7 +308,49 @@ def main():
         
         #### Prediction ###
         preds, probs, paths = predict(model, input_data)
+        
+        #### Data Monitoring ####
+        inf_means, inf_stds = collect_pixel_stats(input_data)
+        ks_mean = ks_2samp(train_means, inf_means)
+        ks_std  = ks_2samp(train_stds, inf_stds)
 
+        print("KS test – mean intensity:", ks_mean)
+        print("KS test – std intensity :", ks_std)
+                
+        inf_feats = extract_features_torch(model, input_data)
+        inf_centroid = inf_feats.mean(axis=0, keepdims=True)
+        cos_dist = cosine_distances(train_centroid, inf_centroid)[0][0]
+        print("Cosine distance:", cos_dist)
+        
+        metrics = {
+        "ks_mean_statistic": ks_mean.statistic,
+        "ks_mean_pvalue": ks_mean.pvalue,
+        "ks_std_statistic": ks_std.statistic,
+        "ks_std_pvalue": ks_std.pvalue,
+        "cosine_distance_feature_drift": cos_dist,
+        }
+
+        df = pd.DataFrame([metrics])
+        monitor_dir = Path(args.output_path) / "monitoring_report"
+        monitor_dir.mkdir(parents=True, exist_ok=True)
+        df.to_csv(f"{args.output_path}/monitoring_report/drift_metrics.csv")
+        
+        x = np.linspace(
+        min(train_means.min(), inf_means.min()),
+        max(train_means.max(), inf_means.max()),
+        500
+        )
+        plt.figure(figsize=(7, 4))
+        plt.plot(x, gaussian_kde(train_means)(x), label="Train", linewidth=2)
+        plt.plot(x, gaussian_kde(inf_means)(x), label="Inference", linewidth=2)
+        plt.xlabel("Mean pixel intensity")
+        plt.ylabel("Density")
+        plt.title("Pixel Intensity Distribution (Train vs Inference)")
+        plt.legend()
+        plt.grid(False)
+        plt.tight_layout()
+        plt.savefig(f"{args.output_path}/monitoring_report/histogram_pixel_intensity_image.png", dpi=300)
+        plt.close()
         
     elif backend == "onnx":
         
