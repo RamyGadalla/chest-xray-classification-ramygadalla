@@ -17,8 +17,8 @@ ifdef BATCH_SIZE
 BATCH_SIZE_ARG := --batch_size $(BATCH_SIZE)
 endif
 
-ifdef OUTPUT_PATH
-OUTPUT_PATH_ARG := --output_path $(OUTPUT_PATH)
+ifdef OUTPUT
+OUTPUT_PATH_ARG := --output_path $(OUTPUT)
 endif
 
 ifdef BACKEND
