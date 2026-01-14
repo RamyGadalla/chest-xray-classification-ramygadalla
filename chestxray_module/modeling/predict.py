@@ -14,7 +14,7 @@ import onnxruntime as ort
 import numpy as np
 from sklearn.metrics.pairwise import cosine_distances
 from scipy.stats import ks_2samp
-from chestxray_module.modeling.monitor import collect_pixel_stats, extract_features_torch
+from chestxray_module.modeling.monitor import collect_pixel_stats, extract_features_torch, needs_human_review, prediction_entropy
 from scipy.stats import gaussian_kde
 import matplotlib.pyplot as plt
 
@@ -59,8 +59,6 @@ def parse_args():
         help="Batch size for inference",
     )
 
-
-    
     parser.add_argument(
         "--output_path",
         type=str,
@@ -131,7 +129,6 @@ def resolve_image_paths(input_path):
     if input_path.is_file():
         return input_path.parent
 
-
 # =========================
 # Model builder
 # =========================
@@ -160,7 +157,6 @@ def load_model(checkpoint_path: str) -> nn.Module:
     model.eval()
 
     return model
-
 
 # =========================
 # Inference / prediction
@@ -192,7 +188,6 @@ def predict(model: nn.Module, dataloader: DataLoader):
 
 def predict_onnx(session, dataloader):
     
-
     all_preds, all_probs, all_paths = [], [], []
 
     for batch in dataloader:
@@ -211,14 +206,11 @@ def predict_onnx(session, dataloader):
         all_probs.extend(probs.tolist())
         all_paths.extend(paths)
         
-
     return all_preds, all_probs, all_paths
-
 
 def softmax_np(x):
     e = np.exp(x - np.max(x, axis=1, keepdims=True))
     return e / e.sum(axis=1, keepdims=True)
-
 
 # =========================
 # Output
@@ -246,11 +238,10 @@ def save_predictions_csv(preds, probs, paths, out_path="predictions.csv"):
         records.append(record)
 
     df = pd.DataFrame(records)
-    df.to_csv(out_path, index=False)
+    #df.to_csv(out_path, index=False)
+    
+    return df
 
-    print(f"[INFO] Predictions saved to: {out_path}")
-    
-    
 # =========================
 # Dataset class for easy access with labels
 # =========================  
@@ -273,7 +264,6 @@ class adjust(Dataset):
 
         }
     
-
 # =========================
 # Main entry point
 # =========================
@@ -310,6 +300,7 @@ def main():
         preds, probs, paths = predict(model, input_data)
         
         #### Data Monitoring ####
+        print("\n===== Data Drift Monitoring =====")
         inf_means, inf_stds = collect_pixel_stats(input_data)
         ks_mean = ks_2samp(train_means, inf_means)
         ks_std  = ks_2samp(train_stds, inf_stds)
@@ -373,7 +364,7 @@ def main():
         
         
     #### The output ####
-    save_predictions_csv(preds, probs, paths, out_path=f"{args.output_path}/prediction.csv")
+    df_pred = save_predictions_csv(preds, probs, paths, out_path=f"{args.output_path}/prediction.csv")
     # print the prediction if single image #
     if len(preds) == 1:
         pred_id = int(preds[0])
@@ -388,9 +379,27 @@ def main():
             print(f"  {IDX_TO_CLASS[i]}: {p:.4f}")
         print("==================\n")
 
+    ###### Human-in-the-loop ######
+    review_flags = []
+    for p, prob, path in zip(preds, probs, paths):
+        flag, reasons = needs_human_review(
+        prob=np.array(prob),
+        cos_dist=cos_dist  # or per-sample if you compute it
+    )
+        review_flags.append({
+        "path": str(path),
+        "predicted_class": int(p),
+        "confidence": float(np.max(prob)),
+        "entropy": float(prediction_entropy(np.array(prob))),
+        "needs_review": flag,
+        "reasons": ";".join(reasons),
+    })
+    
+    df_review = pd.DataFrame(review_flags)
+    df_merged = df_pred.merge(df_review, on="path", how="inner")
+    df_merged.to_csv(f"{args.output_path}/prediction.csv")
     print(f"[DONE] Inference complete on {len(preds)} images /n")
     print(f"Output saved {args.output_path} ")
-
-
+    
 if __name__ == "__main__":
     main()
