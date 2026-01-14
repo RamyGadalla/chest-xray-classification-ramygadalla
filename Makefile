@@ -37,7 +37,7 @@ eval:
 	python chestxray_module/modeling/evaluate.py
 
 predict:
-	python chestxray_module/modeling/predict_modifiy.py \
+	python chestxray_module/modeling/predict.py \
 		--input_path $(INPUT) \
 		$(OUTPUT_PATH_ARG) \
 		$(CHECKPOINT_ARG) \
