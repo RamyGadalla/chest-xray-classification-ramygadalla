@@ -1,3 +1,19 @@
+
+"""
+extract_reference_stats.py
+
+
+Extract reference stats (training dataset) on pixel and feature level.
+These stats will be used as a reference to monitor data drift and model performance during inference.
+
+Input:
+- model (pytorch)
+- dataset
+
+Used by:
+- CLI (make predict)
+"""
+
 import os
 import numpy as np
 import torch
@@ -9,13 +25,18 @@ from chestxray_module.modeling.predict import adjust
 import torch.nn as nn
 from torchvision import models
 
+# -----------------------------
+#        Variables
+# -----------------------------
+
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 REFERENCE_DIR = Path("references")
 REFERENCE_DIR.mkdir(exist_ok=True)
 NUM_CLASSES = 3 
 
+
 # -----------------------------
-# Feature extractor
+#      Feature extractor
 # -----------------------------
 def get_feature_extractor(model):
     """
@@ -31,7 +52,7 @@ def get_feature_extractor(model):
 
 
 # -----------------------------
-# Main stats builder
+#   Stats builder function
 # -----------------------------
 def build_reference_stats(model, train_dataset):
 
@@ -102,7 +123,7 @@ def build_reference_stats(model, train_dataset):
     feature_cov = np.cov(features, rowvar=False)
 
     # -----------------------------
-    # Save artifacts
+    #  Save artifacts
     # -----------------------------
     np.savez(
         REFERENCE_DIR / "pixel_stats.npz",
@@ -127,9 +148,7 @@ def build_reference_stats(model, train_dataset):
     print(" - feature_cov.npy")
 
 
-# -----------------------------
-# Example usage
-# -----------------------------
+
 if __name__ == "__main__":
     
     model = models.densenet121(weights=None)
@@ -145,7 +164,7 @@ if __name__ == "__main__":
     
     image_paths = "data/interim/cleaned_data/train"
     raw_data = data_load(data_dir=image_paths, recursive=True, inspect=False)
-    transformed_data = transform(raw_data, "test") # test split transformation. no augmentation.
+    transformed_data = transform(raw_data, "test") # Test-type split transformation. No augmentation.
     train_dataset = adjust(transformed_data)
     
     build_reference_stats(model, train_dataset)
