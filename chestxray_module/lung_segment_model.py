@@ -1,5 +1,5 @@
 
-# this model is from repo https://github.com/IlliaOvcharenko/lung-segmentation
+# This model is from repo https://github.com/IlliaOvcharenko/lung-segmentation
 
 import torch
 import torchvision
