@@ -2,7 +2,6 @@
 """
 extract_reference_stats.py
 
-
 Extract reference stats (training dataset) on pixel and feature level.
 These stats will be used as a reference to monitor data drift and model performance during inference.
 
