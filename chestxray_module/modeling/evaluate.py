@@ -1,14 +1,15 @@
 """
-Final evaluation script for the trained chest X-ray model.
+Final evaluation script for the best chest X-ray model.
 
 Purpose:
 - Evaluate the frozen best model on the TEST split
 - Compute final metrics (AUROC, F1, Recall)
 - Save confusion matrix and classification report
 
-This script performs NO training.
-Run once, after training is complete.
+This script performs no training.
 
+Usage:
+     - CLI > make eval
 """
 
 from chestxray_module.dataset import load_split
@@ -96,7 +97,7 @@ model.to(DEVICE)
 model.eval()
 
 # =============================
-# Evaluation loop
+#    Evaluation loop 
 # =============================
 all_targets = []
 all_probs = []
@@ -117,7 +118,7 @@ all_probs = np.concatenate(all_probs)
 all_preds = np.argmax(all_probs, axis=1)
 
 # =============================
-# Metrics
+#       Metrics
 # =============================
 # could call helper functions from training script, but need to restructure train.py to allow that
 auroc = roc_auc_score(
@@ -149,7 +150,7 @@ for key, value in metrics.items():
             "value": value
         })
 
-    # Case 2: per-class metric (list / array)
+    # Case 2: per-class metric 
     else:
         for i, v in enumerate(value):
             rows.append({
@@ -217,7 +218,7 @@ report_df.to_csv(OUT_DIR / "classification_report.csv")
 print(f"\n classification report.csv saved to: {OUT_DIR.resolve()}")
 
 # =============================
-# Calibration curve
+#    Calibration curve
 # =============================
 
 all_probs = []
@@ -347,7 +348,6 @@ cam = GradCAMPlusPlus(
     target_layers=target_layers
 )
 
-
 # ----------------------------
 # Collect predictions
 # ----------------------------
@@ -392,7 +392,7 @@ CASES = {
 }
 
 # ----------------------------
-# Run Grad-CAM++
+#     Run Grad-CAM++
 # ----------------------------
 for name, case in CASES.items():
     if case is None:
@@ -438,7 +438,7 @@ for name, case in CASES.items():
     plt.tight_layout()
 
     # ----------------------------
-    # SAVE figure
+    #     SAVE figure
     # ----------------------------
     #out_path = os.path.join(OUT_DIR, f"{name}_gradcam.png")
  
