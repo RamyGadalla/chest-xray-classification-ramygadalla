@@ -1,6 +1,6 @@
 metric,class,value
-auroc_macro,all,0.9995815995190687
-f1_macro,all,0.9726240505465006
+auroc_macro,all,0.9995418881279855
+f1_macro,all,0.9755023357255004
 recall_normal,all,0.9880952380952381
 recall_pneumonia,all,1.0
-recall_tuberculosis,all,0.9501510574018127
+recall_tuberculosis,all,0.9561933534743202
