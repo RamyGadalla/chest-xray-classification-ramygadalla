@@ -11,6 +11,8 @@ Key features:
 - Early stopping on validation Macro AUROC
 - Checkpointing best model
 """
+
+
 from chestxray_module.dataset import load_split
 import os
 from pathlib import Path
@@ -32,7 +34,7 @@ import mlflow.pytorch
 
 
 # # -----------------------------
-# # CONFIGURATION (keep explicit)
+# #      CONFIGURATION 
 # # -----------------------------
 
 # need to parse these arguments for "make train" command if have time later.
@@ -58,7 +60,7 @@ print(f"CHECKPOINT_PATH is {CHECKPOINT_PATH}")
 print(f"OUT_DIR is {OUT_DIR}")
 
 # -----------------------------
-# REPRODUCIBILITY
+#     REPRODUCIBILITY
 # -----------------------------
 
 SEED = 42
@@ -72,10 +74,8 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 # # -----------------------------
-# # DATA LOADERS
+# #       DATA LOADERS
 # # -----------------------------
-
-
 
 train_dataset = load_split('train')
 val_dataset = load_split('val')
@@ -96,9 +96,8 @@ val_loader = DataLoader(
     pin_memory=True,
 )
 
-
 # -----------------------------
-# MODEL
+#          MODEL
 # -----------------------------
 
 # Load pretrained DenseNet
@@ -114,15 +113,15 @@ model.classifier = nn.Sequential(
 model = model.to(DEVICE)
 
 # -----------------------------
-# LOSS FUNCTION
+#        LOSS FUNCTION
 # -----------------------------
-# pneumonia gets higher weight because it is under-represented compared to TB and has high cost of misclassification. 
-# TB less weight as it is over-represented. normal gets the least weight. 
+# pneumonia gets higher weight because it is under-represented compared to TB and has higher cost of misclassification than normal. 
+# TB less weight as it is over-represented. Normal gets the least weight. 
 class_weights = torch.tensor([0.5, 2.0, 1.0], device=DEVICE)
 criterion = nn.CrossEntropyLoss(weight=class_weights)
 
 # -----------------------------
-# OPTIMIZER (DIFFERENTIAL LR)
+#      OPTIMIZER (DIFFERENTIAL LR)
 # -----------------------------
 
 optimizer = torch.optim.AdamW(
@@ -133,22 +132,20 @@ optimizer = torch.optim.AdamW(
     weight_decay=WEIGHT_DECAY,
 )
 
-
-
 # -----------------------------
 # SCHEDULER
 # -----------------------------
 
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer,
-    mode="max",           # we monitor AUROC (higher is better)
+    mode="max",           
     factor=0.1,
     patience=2,
-    #verbose=True,
+    
 )
 
 # -----------------------------
-# METRIC HELPER FUNCTION
+#    METRIC HELPER FUNCTION
 # -----------------------------
 
 def compute_metrics(y_true, y_probs):
@@ -175,10 +172,8 @@ def compute_metrics(y_true, y_probs):
 
     return auroc, f1, recall_per_class
 
-
-
 # -----------------------------
-# TRAIN / VALIDATION LOOPS
+#     TRAIN / VALIDATION LOOPS
 # -----------------------------
 
 def train_one_epoch(model, loader):
@@ -217,7 +212,6 @@ def train_one_epoch(model, loader):
 
     return avg_loss, auroc, f1, recall_per_class, all_targets, all_probs
 
-
 @torch.no_grad()
 def validate_one_epoch(model, loader):
     model.eval()
@@ -251,9 +245,9 @@ def validate_one_epoch(model, loader):
 # TRAINING LOOP (WITH EARLY STOPPING)
 # -----------------------------
 
-# Enable MLflow autologging ONCE (before training)
+# Enable MLflow autologging 
 mlflow.autolog(
-    log_models=False  #    log the best model manually at this point
+    log_models=False  #    log the best model manually at this point of development
 )
 
 best_val_auroc = -np.inf
@@ -266,7 +260,6 @@ with mlflow.start_run(run_name="DenseNet_Multiclass_ChestXray"):
         train_loss, train_auroc, train_f1, train_recall_per_class, _, _ = train_one_epoch(model, train_loader)
         val_loss,   val_auroc,   val_f1,    val_recall_per_class , val_targets, val_probs  = validate_one_epoch(model, val_loader)
 
-        
         mlflow.log_metrics(
             {
                 "train_auroc": train_auroc,
@@ -337,15 +330,14 @@ with mlflow.start_run(run_name="DenseNet_Multiclass_ChestXray"):
 
 
 # -----------------------------
-# LOAD BEST MODEL
+#      LOAD BEST MODEL
 # -----------------------------
-
+# Reloading here to make sure it can be loaded and used downstream sucessfully. (Delete later)
 model.load_state_dict(torch.load(CHECKPOINT_PATH))
 print(f"Best validation AUROC: {best_val_auroc:.4f}")
 
-
 # -----------------------------
-# Reports and figures
+#     Reports and figures
 # -----------------------------
 
 model.eval()
