@@ -51,7 +51,7 @@ def get_feature_extractor(model):
 
 
 # -----------------------------
-#   Stats builder function
+#   Stats builder function (for training dataset)
 # -----------------------------
 def build_reference_stats(model, train_dataset):
 

@@ -1,3 +1,7 @@
+"""
+Helper functions to be called from predict.py for data drift monitoring
+"""
+
 import numpy as np
 from tqdm import tqdm
 import torch.nn as nn
@@ -36,7 +40,7 @@ def extract_features_torch(model, dataloader):
     with torch.no_grad():
         for batch in tqdm(dataloader, desc="Extracting features"):
             imgs = batch["image"].to(DEVICE)
-
+            
             x = model.features(imgs)
             x = torch.relu(x)
             x = torch.nn.functional.adaptive_avg_pool2d(x, (1, 1))
@@ -45,7 +49,6 @@ def extract_features_torch(model, dataloader):
             features.append(x.cpu().numpy())
 
     return np.vstack(features)
-
 
 
 def prediction_entropy(probs):
