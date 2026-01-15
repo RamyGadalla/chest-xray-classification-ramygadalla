@@ -1,3 +1,22 @@
+"""
+predict. py
+
+Purpose:
+    Inference using best model.
+
+Returns:
+     - prediction.csv in the $OUTPUT, with the following information. image_path, the predicated_class, probability of the 3 classes, confidence, prediction, entropy,
+     whether a case needs human review and the reason it is flagged.
+     - monitoring report with data drift metrics as a proxy for model performance. Metrics are KS statistics and cosine distance.
+     
+     
+     
+Usage:
+     - CLI > make predict INPUT="" OUTPUT="" CHECKPOINT="" BATCH_SIZE= BACKEND=""
+     - Only INPUT is required. The rest have default values. 
+     
+"""
+
 
 import argparse
 from pathlib import Path
@@ -213,7 +232,7 @@ def softmax_np(x):
     return e / e.sum(axis=1, keepdims=True)
 
 # =========================
-# Output
+#     Output
 # =========================
 IDX_TO_CLASS = {
     0: "normal",
@@ -397,6 +416,7 @@ def main():
     
     df_review = pd.DataFrame(review_flags)
     df_merged = df_pred.merge(df_review, on="path", how="inner")
+    df_merged = df_merged.drop(columns=["predicted_class_y"])   # numerical class, not needed anymore.
     df_merged.to_csv(f"{args.output_path}/prediction.csv")
     print(f"[DONE] Inference complete on {len(preds)} images /n")
     print(f"Output saved {args.output_path} ")
