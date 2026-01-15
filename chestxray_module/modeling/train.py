@@ -10,6 +10,9 @@ Key features:
 - ReduceLROnPlateau scheduler
 - Early stopping on validation Macro AUROC
 - Checkpointing best model
+
+Usage :
+    - CLI > make train
 """
 
 
