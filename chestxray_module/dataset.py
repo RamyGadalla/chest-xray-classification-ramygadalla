@@ -1,3 +1,17 @@
+"""
+dataset.py
+
+Contains helper functions to handle data importing, cleaning, and processing.
+
+Input:
+pre-processed data
+
+Used by:
+- CLI (make train, make predict and make eval)
+
+IMPORTANT: needs to be ran from the project/repo root.
+"""
+
 from pathlib import Path
 from torch.utils.data import Dataset
 from monai.transforms import Compose, Transform, LoadImage, EnsureChannelFirst, Lambda, RepeatChannel, Resize, SpatialPad, ScaleIntensity, NormalizeIntensity, RandRotate, RandAffine, RandFlip, RandGaussianNoise
@@ -11,9 +25,13 @@ import cv2
 from torch.utils.data import Subset
 import numpy as np
 
-
-
 def clean_data():
+    """
+    Removes duplicates and low quality images.
+    
+    Returns: cleaned data no duplicate images.
+    """
+    # csv_path contains the paths to all files needs to be delete. Decision were made during EDA. Please see 01_ExploratoryDataAnalysis.
     csv_path = Path("data/raw/paths_to_delete.csv")
     source_dir = Path("data/raw/unzipped_raw_data")
     cleaned_dir = Path("data/interim/cleaned_data")
@@ -23,7 +41,7 @@ def clean_data():
         print(f"[INFO] {cleaned_dir} already exists.")
         return
 
-    # --- Copy raw data ---
+    # --- Copy raw data to interim data folder---
     print("Copying raw/unzipped_raw_data → data/interim/cleaned_data ...")
     shutil.copytree(source_dir, cleaned_dir)
 
@@ -51,11 +69,13 @@ def data_load(data_dir, recursive=False, inspect=True, n_samples=3):
     Parameters
     ----------
     data_dir : str or Path
-        Root directory containing image files.
+        Directory containing image files.
     inspect : bool
-        Whether to print sample dataset information.
+        Whether to print sample dataset information and print information as sanity check.
     n_samples : int
         Number of samples to inspect. samples are chosen randomly.
+    recursive: bool
+        whether to fetch images in data_dir recursively 
 
     Returns
     -------
@@ -104,8 +124,8 @@ def data_load(data_dir, recursive=False, inspect=True, n_samples=3):
 class GCLAHE(Transform):
     """
     Create a Global-CLAHE transformation for image enhancement more suited for medical images.
-    improves local contrast while preserving anatomical detail in medical images
-    
+    Improves local contrast while preserving anatomical detail in medical images.
+    GCLACHE is not native to MONAI. So OpenCv is used.
     """
     
     def __init__(self, tile_grid_size=(8, 8), max_clip_limit=3.0):
@@ -153,6 +173,9 @@ def transform(dataset, type):
     ----------
     dataset : monai.data.Dataset
         Existing dataset (paths will be reused).
+        
+    Type:  str
+       If "train" MONAI augmentation is applied
 
     Returns
     -------
@@ -265,7 +288,7 @@ def get_split(dataset, split_name):
 #Specific for this project/repo
 def load_split(split):
     """
-    Load a specific split ('train', 'val', or 'test') from the labeled dataset.
+    Wrapper function to load and transform a specific split ('train', 'val', or 'test').
     """
     ## This order could be more efficient I will look into it later ##
     clean_data()
