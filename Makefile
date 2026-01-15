@@ -29,7 +29,7 @@ endif
 # COMMANDS                                                                      #
 #################################################################################
 
-.PHONY: train eval
+.PHONY: train eval predict
 train:
 	python chestxray_module/modeling/train.py
 	
