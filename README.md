@@ -8,6 +8,10 @@
 
 This repository contains an end-to-end chest X-ray classification pipeline (Normal / Pneumonia / Tuberculosis), including training, evaluation, explainability, inference, deployment, and monitoring utilities.
 
+## Online endpoint for single-image classification
+
+[Online classification URL - Click here](https://huggingface.co/spaces/RamyGadalla/chestxray-SKAI)
+
 ## Dateset
 
 Dataset URL: https://www.kaggle.com/datasets/muhammadrehan00/chest-xray-dataset
@@ -17,13 +21,6 @@ This dataset merges multiple public chest X-ray sources into one classification 
 1-Normal  
 2-Pneumonia  
 3-Tuberculosis    `	
-
-
-## Online endpoint for single-image classification
-
-[Online classification URL - Click here](https://huggingface.co/spaces/RamyGadalla/chestxray-SKAI)
-
-
 
 ## Quick Start
 
