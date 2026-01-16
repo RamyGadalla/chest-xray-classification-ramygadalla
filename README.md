@@ -195,5 +195,11 @@ Evaluation on "Test" dataset
  <img src="reports/inference/monitoring_report/histogram_pixel_intensity_image.png" width="500" height="300">
 </p>
 
+
+## Online endpoint for single-image classification
+
+[Online classification URL - Click here](https://huggingface.co/spaces/RamyGadalla/chestxray-SKAI)
+
+
 --------
 
