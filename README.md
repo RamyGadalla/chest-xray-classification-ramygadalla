@@ -1,4 +1,4 @@
-# Deep-learning based multi-class classification model for chest X-ray images
+# Deep Learning for Multi-Class Chest X-Ray Classification (Tuberculosis, Pneumonia, Normal)
 
 <a target="_blank" href="https://cookiecutter-data-science.drivendata.org/">
     <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" />
@@ -16,7 +16,7 @@ This dataset merges multiple public chest X-ray sources into one classification 
 
 1-Normal  
 2-Pneumonia  
-3-Tuberculosis 
+3-Tuberculosis    `	
 
 
 ## Quick Start
@@ -39,8 +39,10 @@ sudo docker run --rm \
 	  chestxray:latest \
 	  make predict \
 	  INPUT="" \      # Input images path
-	  OUTPUT=""       # output destination path
+	  OUTPUT=""       # output destination path (0ptional). Default is the working directory.
 ```
+`make train` and `make eval` can also be used within the container.
+
 ## Project Organization
 
 ```
@@ -49,7 +51,14 @@ sudo docker run --rm \
 │   ├── download_data.py
 │   ├── extract_reference_stats.py
 │   ├── lung_segment_model.py
-│   └── modeling                       
+│   └── modeling
+│       ├── evaluate.py  
+│       ├── export_onnx.py  
+│       ├── monitor.py  
+│       ├── predict.py  
+│       ├── train.py  
+│       ├── dataset.py  
+│       └── extract_reference_stat.py                       
 ├── data
 ├── Dockerfile
 ├── environment.yml
@@ -67,7 +76,7 @@ sudo docker run --rm \
 │   ├── predict.ipynb
 │   ├── segmentation_dev.ipynb
 │   ├── training_dev.ipynb
-│   └── unet-6v.pt
+
 ├── pyproject.toml
 ├── README.md
 ├── references
@@ -79,13 +88,112 @@ sudo docker run --rm \
 │   ├── best_model
 │   ├── inference
 │   └── model_with_duplicates_images
+├── download_data.py
 └── requirements.txt
 ```
+## Running inference, training, and evaluation locally
+
+```s
+conda env create -f environment.yml
+conda activate medical_imaging_prod
+make train
+make eval
+make predict INPUT="" OUTPUT=""
+```
+`make predict` supports following options:  
+`OUTPUT=`    : destination path for output artifacts  
+`BACKEND=`   : choices are either "torch" or "onnx". Default value is "torch"  
+`BATCH_SIZE`:  default value 32 for torch and 1 for onnx format (RECOMMENDED)   
+`CHECKPOINT`:  default is best_model.pt for "torch" and best_model.onnx for "onnx"  
+
+## Data Preprocessing
+Applied to all data splits (train/val/test):  
+Resize to 224x224  
+Symmetrical padding 
+Scale intensity    
+Contrast enhancement G-CLAHE
+Normalize intensity with ImageNet stats  
+
+Applied to train data split only:  
+MONAI augmentaion:  
+Rotation  ±10 degrees  
+translation: translate_range=(10, 10),scale_range=(0.1, 0.1)  
+flippping: spatial_axis=1  
+adding Gaussian noise: mean=0.0, std=0.01, prob=0.3  
 
 
+## Model Training Specification
+Key features:
+- Pretrained DenseNet
+- Initialization: ImageNet pretrained weights
+- Classifier head:  full connected layers - dropout (`p=0.5`)
+- Weighted CrossEntropyLoss (Normal=0,5, Pneumonia=2, Tuberculosis=1.0)
+- AdamW (wegith decay L2) differential learning rates
+- Primary metric AUROC
+- ReduceLROnPlateau scheduler (factor=0,1 and patience=2)
+- Early stopping on validation Macro AUROC (patience=5)
+- Checkpointing best model (higest maro-AUROC)
+- Other metrics macro-F1 and per-class recall
 
 
+Classification table
+|              |   precision |     recall |   f1-score |   support |
+|:-------------|------------:|-----------:|-----------:|----------:|
+| normal       |    0.917127 |   0.991045 |   0.952654 |       335 |
+| pneumonia    |    0.987981 |   1        |   0.993954 |       411 |
+| tuberculosis |    0.998413 |   0.950151 |   0.973684 |       662 |
+| accuracy     |             |            |   0.974432 |      1408 |
+| macro avg    |    0.96784  |   0.980399 |   0.973431 |      1408 |
+| weighted avg |    0.976028 |   0.974432 |   0.974597 |      1408 |
 
+
+## Evaluation
+
+Evaluation on "Test" dataset
+
+##### Confusion matrix
+
+<p align="center">
+  <img src="reports/best_model/eval_reports/figures/confusion_matrix.png" width="400">
+</p>
+
+##### Threshold Analysis
+<p align="center">
+ <img src="reports/best_model/eval_reports/figures/threshold_Recall_specificity_curve.png" width="500" height="300">
+</p>
+
+##### uncalibrated reliability curve
+<p align="center">
+ <img src="reports/best_model/eval_reports/figures/calibration_curve.png" width="500" height="300">
+</p>
+
+##### GradCam Maps
+<p align="center">
+ <img src="reports/best_model/eval_reports/GradcamMaps/PNA_FP_gradcam.png" width="500" height="300">
+ <img src="reports/best_model/eval_reports/GradcamMaps/PNA_TP_gradcam.png" width="500" height="300"> 
+</p>
+
+<p align="center">
+ <img src="reports/best_model/eval_reports/GradcamMaps/TB_FP_gradcam.png" width="500" height="300">
+ <img src="reports/best_model/eval_reports/GradcamMaps/TB_TP_gradcam.png" width="500" height="300"> 
+</p>
+
+
+<p align="center">
+ <img src="reports/best_model/eval_reports/GradcamMaps/TB_FN_gradcam.png" width="500" height="300">
+</p>
+
+## Inference  
+
+##### Data Drift Metrics
+|   ks_mean_statistic |   ks_mean_pvalue |   ks_std_statistic |   ks_std_pvalue |   cosine_distance_feature_drift |
+|--------------------:|-----------------:|-------------------:|----------------:|--------------------------------:|
+|            0.151714 |      4.80011e-13 |          0.0667039 |      0.00725856 |                        0.113913 |
+
+  
+<p align="center">
+ <img src="reports/inference/monitoring_report/histogram_pixel_intensity_image.png" width="500" height="300">
+</p>
 
 --------
 
