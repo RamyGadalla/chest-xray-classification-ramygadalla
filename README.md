@@ -41,7 +41,7 @@ sudo docker run --rm \
 	  -w /app/chestxray \
 	  chestxray:latest \
 	  make predict \
-	  INPUT="" \      # Input images path
+	  INPUT="" \      # Input images path (single file path or a directory)
 	  OUTPUT=""       # output destination path (0ptional). Default is the working directory.
 ```
 `make train` and `make eval` can also be used within the container.
