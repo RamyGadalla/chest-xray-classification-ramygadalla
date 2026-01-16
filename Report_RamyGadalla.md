@@ -124,6 +124,15 @@ Data drift metrics are output as part of the inference pipeline.
 |--------------------:|-----------------:|-------------------:|----------------:|--------------------------------:|
 |            0.151714 |      4.80011e-13 |          0.0667039 |      0.00725856 |                        0.113913 |
 
+Inference pipeline outputs histogram comparing means pixel intensity of reference dataset (training split) vs input data.
+
+<p align="center">
+ <img src="reports/inference/monitoring_report/histogram_pixel_intensity_image.png" width="500" height="300">
+</p>
+
+
+
+
 ## Segmentation Attempt
 An attempt was made to apply lung segmentation to restrict model attention to pulmonary regions; however, segmentation quality was insufficient for reliable integration, and results are therefore reported without segmentation. Details of the segmentation model tried could be found here https://github.com/IlliaOvcharenko/lung-segmentation. The model was tried with the built-in weights and fine-tuning it would require training data with lung masks. As you can see below, the segmentation is extremely sparse, fragmented and inconsistent across patients. 
 
