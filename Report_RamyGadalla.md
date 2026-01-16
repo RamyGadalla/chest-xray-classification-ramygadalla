@@ -109,6 +109,20 @@ In general, while Grad-CAM provides qualitative insight, validation by a radiolo
  <img src="reports/best_model/eval_reports/GradcamMaps/TB_FN_gradcam.png" width="500" height="300">
 </p>
 
+## Inference
+
+The predicted class is output along: probabilties of the other two classes, confidence value, entropy, and human-in-the-loop element.  
+
+|ID | predicted_class_x  |   prob_normal |   prob_pneumonia |   prob_tuberculosis |   confidence |   entropy | needs_review   |   reasons                   |
+|--:|-------------------:|--------------:|-----------------:|--------------------:|-------------:|----------:|---------------:|----------------------------:|
+| 1 |tuberculosis        |     0.0935451 |       0.00167017 |            0.904785 |     0.904785 |  0.322849 | False          |                             |  
+| 2 |normal              |     0.4877595 |       0.0.269359 |            0.249000 |     0.404785 |  1.322849 | True           |Low_confidence; high entropy | 
+ 
+ 
+Data drift metrics are output as part of the inference pipeline.
+|   ks_mean_statistic |   ks_mean_pvalue |   ks_std_statistic |   ks_std_pvalue |   cosine_distance_feature_drift |
+|--------------------:|-----------------:|-------------------:|----------------:|--------------------------------:|
+|            0.151714 |      4.80011e-13 |          0.0667039 |      0.00725856 |                        0.113913 |
 
 ## Segmentation Attempt
 An attempt was made to apply lung segmentation to restrict model attention to pulmonary regions; however, segmentation quality was insufficient for reliable integration, and results are therefore reported without segmentation. Details of the segmentation model tried could be found here https://github.com/IlliaOvcharenko/lung-segmentation. The model was tried with the built-in weights and fine-tuning it would require training data with lung masks. As you can see below, the segmentation is extremely sparse, fragmented and inconsistent across patients. 
@@ -141,4 +155,4 @@ https://huggingface.co/spaces/RamyGadalla/chestxray-SKAI
 
 
 Notes:
-Typically, I would not leave jupyter notebooks in the repo, but I am leaving it in this case to show development effort and to track thoughts if needed.
+Typically, I would not leave jupyter notebooks in the repo, but I am leaving it in this case to show development effort and to track thoughts if needed, except 01_ExploratoryDataAnalysis, it is readable.
