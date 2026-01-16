@@ -101,13 +101,13 @@ These misclassification patterns are consistent with the calibration and thresho
   <img src="reports/best_model/eval_reports/figures/threshold_Recall_specificity_curve.png" width="500" height="300">
 </p>
 
-### Gradcam Maps
-False Positive Pneumonia: diffused attention between left and right lung. 
-True Positive Pneumonia: attention aligns with lung zones, suggesting the model relies on true and relevant pulmonary features.
-True Positive Tuberculosis: attention is spatially localized in the lung.
-False Positive Tuberculosis:  attention is extende outside the lung zones to the image borders.
-False Negative Tubercuosus: although attention seems to be focused in the lung regions but the model fails to recall this case.
-In general, while Grad-CAM provides qualitative insight, validation by a radiologist is essential to assess whether the model’s attention corresponds to clinically relevant histopathological patterns or potentially misleading artifacts.
+### Gradcam Maps(representative example photos)
+False Positive Pneumonia: diffused attention between left and right lung.   
+True Positive Pneumonia: attention aligns with lung zones, suggesting the model relies on true and relevant pulmonary features.  
+True Positive Tuberculosis: attention is spatially localized in the lung.  
+False Positive Tuberculosis:  attention is extende outside the lung zones to the image borders.  
+False Negative Tubercuosus: although attention seems to be focused in the lung regions but the model fails to recall this case.  
+In general, while Grad-CAM provides qualitative insight, validation by a radiologist is essential to assess whether the model’s attention corresponds to clinically relevant histopathological patterns or potentially misleading artifacts.  
 
 <p align="center">
  <img src="reports/best_model/eval_reports/GradcamMaps/PNA_FP_gradcam.png" width="500" height="300">
@@ -126,7 +126,7 @@ In general, while Grad-CAM provides qualitative insight, validation by a radiolo
 
 ## Inference
 
-The predicted class is output along: probabilties of the other two classes, confidence value, entropy, and human-in-the-loop element.  
+The predicted class is output along: probabilties of the other two classes, confidence value, entropy, and human-in-the-loop element.  Example:
 
 |ID | predicted_class_x  |   prob_normal |   prob_pneumonia |   prob_tuberculosis |   confidence |   entropy | needs_review   |   reasons                   |
 |--:|-------------------:|--------------:|-----------------:|--------------------:|-------------:|----------:|---------------:|----------------------------:|
@@ -134,7 +134,8 @@ The predicted class is output along: probabilties of the other two classes, conf
 | 2 |normal              |     0.4877595 |       0.0.269359 |            0.249000 |     0.404785 |  1.322849 | True           |Low_confidence; high entropy | 
  
  
-Data drift metrics are output as part of the inference pipeline.
+Data drift metrics are output as part of the inference pipeline. Example  
+
 |   ks_mean_statistic |   ks_mean_pvalue |   ks_std_statistic |   ks_std_pvalue |   cosine_distance_feature_drift |
 |--------------------:|-----------------:|-------------------:|----------------:|--------------------------------:|
 |            0.151714 |      4.80011e-13 |          0.0667039 |      0.00725856 |                        0.113913 |
