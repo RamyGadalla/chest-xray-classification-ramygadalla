@@ -41,7 +41,22 @@ Having that said, there is clear class imbalance on the dataset-level (not the s
 
 Class distribution analysis shows mild imbalance across classes, with Tuberculosis representing the largest class (~46%) and Normal and Pneumona are close to each others. All classes are well represented with thousands for image in each, suggesting that aggressive resampling is unnecessary; however, macro-averaged evaluation metrics is more appropriate than over-all model accuracy to ensure balanced performance across classes. Given the sensitivity of this medical diagnosis and the class imbalance, recall per class metric especially for TB and Pnemonia should be monitored to avoid costly false negative.
 
-Please for more on EDA, check `01_ExploratoryDataAnalysis.ipynb` in `notebooks`
+Please for more on EDA, check `01_ExploratoryDataAnalysis.ipynb` in `notebooks`.
+
+
+## Model Training Specification
+Key features:
+- Pretrained DenseNet-121
+- Initialization: ImageNet pretrained weights
+- Classifier head:  full connected layers - dropout (`p=0.5`)
+- Weighted CrossEntropyLoss (Normal=0,5, Pneumonia=2, Tuberculosis=1.0)
+- AdamW (wegith decay L2) differential learning rates
+- Primary metric AUROC
+- ReduceLROnPlateau scheduler (factor=0,1 and patience=2)
+- Early stopping on validation Macro AUROC (patience=5)
+- Checkpointing best model (higest maro-AUROC)
+- Other metrics: macro-F1 and per-class recall
+
 
 ## Final Metrics and Evaluation
 
@@ -129,8 +144,6 @@ Inference pipeline outputs histogram comparing means pixel intensity of referenc
 <p align="center">
  <img src="reports/inference/monitoring_report/histogram_pixel_intensity_image.png" width="500" height="300">
 </p>
-
-
 
 
 ## Segmentation Attempt
