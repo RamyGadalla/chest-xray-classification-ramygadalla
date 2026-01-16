@@ -141,4 +141,4 @@ https://huggingface.co/spaces/RamyGadalla/chestxray-SKAI
 
 
 Notes:
-Typically, I wouldnt leave jupyter notebooks in the repo, but I am leaving it in this case to show development effort and to track thoughts if needed.
+Typically, I would not leave jupyter notebooks in the repo, but I am leaving it in this case to show development effort and to track thoughts if needed.
