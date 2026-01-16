@@ -161,7 +161,7 @@ class GCLAHE(Transform):
 def transform(dataset, type):
     """
     Return a new transformed Dataset
-     a- convert to grayscale by averaging channels since some images have incononsistent channels
+     a- convert to grayscale by averaging channels since some images have incononsistent values across channels. e.g dominating blue
      b- repeat channels to have 3 channels again.
      c- resize to 224x224
      d- pad to ensure 224x224
