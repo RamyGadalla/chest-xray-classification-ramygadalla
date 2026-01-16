@@ -125,7 +125,7 @@ adding Gaussian noise: mean=0.0, std=0.01, prob=0.3
 
 ## Model Training Specification
 Key features:
-- Pretrained DenseNet
+- Pretrained DenseNet-121
 - Initialization: ImageNet pretrained weights
 - Classifier head:  full connected layers - dropout (`p=0.5`)
 - Weighted CrossEntropyLoss (Normal=0,5, Pneumonia=2, Tuberculosis=1.0)
@@ -134,7 +134,7 @@ Key features:
 - ReduceLROnPlateau scheduler (factor=0,1 and patience=2)
 - Early stopping on validation Macro AUROC (patience=5)
 - Checkpointing best model (higest maro-AUROC)
-- Other metrics macro-F1 and per-class recall
+- Other metrics: macro-F1 and per-class recall
 
 
 Classification table
