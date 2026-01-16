@@ -72,14 +72,12 @@ sudo docker run --rm \
 │   └── best_model.pt
 ├── notebooks                            
 │   ├── 01_ExploratoryDataAnaylsis.ipynb
-│   ├── 02_Preprocess.ipynb
-│   ├── evaluate_dev.ipynb
-│   ├── monitoring.ipynb
-│   ├── monitor.py
-│   ├── predict.ipynb
-│   ├── segmentation_dev.ipynb
-│   ├── training_dev.ipynb
-
+│   ├── dev_Preprocess.ipynb
+│   ├── dev_evaluate.ipynb
+│   ├── dev_monitoring.ipynb
+│   ├── dev_predict.ipynb
+│   ├── dev_segmentation_dev.ipynb
+│   ├── dev_training.ipynb
 ├── pyproject.toml
 ├── README.md
 ├── references
