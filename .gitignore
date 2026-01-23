@@ -22,6 +22,12 @@ mlruns/*
 chestxray.code-workspace
 mlflow.db
 notebooks/dev_evaluate.ipynb
+/notebooks/dev_evaluate.ipynb
+notebooks/dev_monitoring.ipynb
+notebooks/dev_predict.ipynb
+notebooks/dev_Preprocess
+notebooks/dev_segmentation.ipynb
+notebooks/dev_training.ipynb
 
 
 Machine_Learning_SpecialistTechnical_Test.pdf
