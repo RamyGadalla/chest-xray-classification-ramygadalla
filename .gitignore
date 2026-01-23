@@ -21,7 +21,7 @@ data/interim/cleaned_data/val/tuberculosis/*jpg
 mlruns/*
 chestxray.code-workspace
 mlflow.db
-notebooks/dev_*
+notebooks/dev_evaluate.ipynb
 
 
 Machine_Learning_SpecialistTechnical_Test.pdf
