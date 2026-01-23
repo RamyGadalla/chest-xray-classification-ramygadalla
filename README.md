@@ -25,7 +25,7 @@ This dataset merges multiple public chest X-ray sources into one classification 
 ## Quick Start
 
 ```
-git clone https://github.com/<your-username>/chestxray.git
+git clone https://github.com/RamyGadalla/chestxray.git
 cd chestxray
 ``` 
 If Kaggle API token is configured on your system, the dataset can be downloaded using:
