@@ -8,25 +8,6 @@
 
 This repository contains an end-to-end chest X-ray classification pipeline (Normal / Pneumonia / Tuberculosis), including training, evaluation, explainability, inference, deployment, and monitoring utilities.
 
-## Deployment
-#### Demo deployment  
-Online endpoint for single-image classification  
-Lightweight deployment (Gradio + ONNX)  
-[Online classification URL - Click here](https://huggingface.co/spaces/RamyGadalla/chestxray-SKAI)  
-
-#### Service deployment
-JSON-based inference API for system-to-system integration  
-Stack: Ray Serve - model compiled and optimized (Dynamic Quanitizaton)
-```
-conda env create -f environment.yml
-conda activate medical_imaging_prod
-python app/serve.py
-```
-Two endpoints:  
-Heathservice	http://localhost:8000/  
-Inference		http://localhost:8000/run_inference?path=PATH/TO/YOUR/PHOTOS
-
-
 ## Dateset
 
 Dataset URL: https://www.kaggle.com/datasets/muhammadrehan00/chest-xray-dataset
@@ -211,6 +192,23 @@ Evaluation on "Test" dataset
  <img src="reports/inference/monitoring_report/histogram_pixel_intensity_image.png" width="500" height="300">
 </p>
 
+## Deployment
+#### Demo deployment  
+Online endpoint for single-image classification  
+Lightweight deployment (Gradio + ONNX)  
+[Online classification URL - Click here](https://huggingface.co/spaces/RamyGadalla/chestxray-SKAI)  
+
+#### Service deployment
+JSON-based inference API for system-to-system integration  
+Stack: Ray Serve - model compiled and optimized (Dynamic Quanitizaton)
+```
+conda env create -f environment.yml
+conda activate medical_imaging_prod
+python app/serve.py
+```
+Two endpoints:  
+Heathservice	http://localhost:8000/  
+Inference		http://localhost:8000/run_inference?path=PATH/TO/YOUR/PHOTOS
 
 
 --------
