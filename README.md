@@ -16,18 +16,23 @@ This dataset merges multiple public chest X-ray sources into one classification 
 
 1-Normal  
 2-Pneumonia  
-3-Tuberculosis    `	
+3-Tuberculosis
 
-## Quick Start
-
-```
-git clone https://github.com/RamyGadalla/chestxray.git
-cd chestxray
-``` 
 If Kaggle API token is configured on your system, the dataset can be downloaded using:
 ```
 python download_data.py  # download dataset in data/raw/unzipped_raw_data
 ```
+
+## Quick Start
+
+1- Online single-image inference endpoint:    
+[Online classification URL - Click here](https://huggingface.co/spaces/RamyGadalla/chestxray-SKAI)  
+
+2- 
+```
+git clone https://github.com/RamyGadalla/chestxray.git
+cd chestxray
+``` 
 Run inference in Docker container from repo root directory
 ```
 docker build -t chestxray:latest
